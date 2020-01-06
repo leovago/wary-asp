@@ -25,13 +25,17 @@ module.exports = function (app, db) {
 
     app.route('/chat')
       .get(ensureAuthenticated, (req, res) => {
-        console.log(req.session);
+        //console.log(req.session);
+        //console.log(`User ${req.session.user_id} has connected`);
+        console.log("User has connected");  
            res.render(process.cwd() + '/views/pug/chat', {user: req.user});
       });
 
     app.route('/logout')
       .get((req, res) => {
-          req.logout();
+          //console.log(`User ${req.user.id} - ${req.user.name} has logged out`);
+      console.log("User has logged out");
+      req.logout();
           res.redirect('/');
       });
 

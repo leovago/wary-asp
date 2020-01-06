@@ -1,6 +1,6 @@
+const passport    = require('passport');
 const session     = require('express-session');
 const mongo       = require('mongodb').MongoClient;
-const passport    = require('passport');
 const GitHubStrategy = require('passport-github').Strategy;
 
 module.exports = function (app, db) {

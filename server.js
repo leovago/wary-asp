@@ -13,10 +13,13 @@ const app         = express();
 const http        = require('http').Server(app);
 const sessionStore= new session.MemoryStore();
 const io = require('socket.io')(http);
+const passportSocketIo = require('passport.socketio');
+const cors = require('cors');
 
 console.clear();
 console.log('esto empieza aqui');
 
+app.use(cors());
 
 fccTesting(app); //For FCC testing purposes
 
@@ -35,10 +38,13 @@ app.use(session({
 }));
 
 
-mongo.connect(process.env.DATABASE, {useNewUrlParser: true, useUnifiedTopology: true}, (err, db) => {
+mongo.connect(process.env.DATABASE, {useNewUrlParser: true, useUnifiedTopology: true}, (err, connection) => {
     if(err) console.log('Database error: ' + err);
   
     console.log('Successful database connection');
+    
+    const db = connection.db();
+  
     auth(app, db);
     routes(app, db);
       
@@ -46,8 +52,36 @@ mongo.connect(process.env.DATABASE, {useNewUrlParser: true, useUnifiedTopology: 
 
   
     //start socket.io code  
+    io.use(passportSocketIo.authorize({
+      cookieParser: cookieParser,
+      secret: process.env.SESSION_SECRET,
+      key: 'express.sid',
+      store: sessionStore
+    }));
+  
+  
+  
+    let currentUsers = 0;
     io.on('connection', socket => {
       console.log('A user has connected');
+      console.log(`User ${socket.request.user.name} connected`);
+      ++currentUsers;
+      io.emit('user count', currentUsers);
+      io.emit('user', {name: socket.request.user.name, currentUsers, currentUsers, connected: true});
+      
+      socket.on('disconnect', () => {
+        console.log("User has disconnected");
+        --currentUsers;
+        io.emit('user count', currentUsers);
+        io.emit('user', {name: socket.request.user.name, currentUsers, currentUsers, connected: false});
+      });
+      
+      socket.on('chat message', function(message){
+        console.log(message);
+        io.emit('chat message', {name: socket.request.user.name, message: message});
+      });
+  
+      
     });
   
   
